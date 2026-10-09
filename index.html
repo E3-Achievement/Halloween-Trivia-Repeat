@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Assignment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4776E6;
+            --accent: #8E54E9;
+            --success: #00b09b;
+            --error: #ff5f6d;
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        body { font-family: 'Fredoka', sans-serif; background: var(--bg-gradient); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; padding: 10px; }
+        #app { background: rgba(255, 255, 255, 0.95); width: 100%; max-width: 850px; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); position: relative; }
+        h1 { text-align: center; color: #333; margin-top: 0; }
+        
+        /* Welcome Screen */
+        #welcomeArea { text-align: center; padding: 40px 10px; animation: fadeIn 0.5s; }
+        #studentNameInput { width: 100%; max-width: 350px; padding: 15px; font-size: 1.2rem; border-radius: 8px; border: 2px solid #ccc; text-align: center; outline: none; margin: 20px 0; font-family: inherit; }
+        #studentNameInput:focus { border-color: var(--primary); }
+
+        .progress-container { width: 100%; background: #eee; height: 10px; border-radius: 5px; margin-bottom: 25px; overflow: hidden; display: none; }
+        .progress-bar { height: 100%; background: var(--success); width: 0%; transition: width 0.5s; }
+
+        /* Speak Buttons */
+        .btn-speak { background: var(--primary); color: white; border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
+        .btn-speak:hover { transform: scale(1.1); }
+        .btn-speak svg { fill: white; width: 22px; height: 22px; }
+        
+        .btn-speak-sm { background: var(--primary); color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; flex-shrink: 0; }
+        .btn-speak-sm:hover { transform: scale(1.1); background: var(--accent); }
+        .btn-speak-sm svg { fill: white; width: 16px; height: 16px; }
+
+        #quizContent { display: none; animation: fadeIn 0.5s; }
+        .story-box { background: #eef2f7; padding: 20px; border-radius: 12px; margin-bottom: 20px; font-size: 1.4rem; color: #2c3e50; display: flex; flex-direction: column; align-items: flex-start; gap: 15px; }
+        .story-text-row { display: flex; align-items: center; gap: 15px; width: 100%; }
+
+        /* Multiple Choice Grid */
+        .choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .option-card { background: white; border: 3px solid #eee; border-radius: 12px; padding: 15px; cursor: pointer; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .option-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        .opt-text-container { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
+        .opt-text-container span { font-size: 1.2rem; font-weight: 600; color: #555; }
+        .option-card.correct { border-color: var(--success); background: #ebfffa; }
+        .option-card.wrong { border-color: var(--error); animation: shake 0.4s; }
+
+        /* Expanding Image Styles & Layouts */
+        .img-wrapper { position: relative; width: 100%; display: flex; justify-content: center; }
+        .seq-img-wrapper { position: relative; flex-shrink: 0; }
+        
+        /* Expand Magnifying Glass Overlay */
+        .expand-icon { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.75); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; opacity: 0.9; cursor: zoom-in; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 5; transition: transform 0.2s, background 0.2s; }
+        .expand-icon:hover { transform: scale(1.05); background: rgba(0,0,0,0.95); }
+
+        /* Specific Image Sizing rules for modes */
+        .img-text-combo { height: 200px; width: 100%; object-fit: contain; background: #fafafa; border-radius: 8px; }
+        .img-only-large { height: 350px; width: 100%; object-fit: contain; background: #fafafa; border-radius: 8px; }
+        
+        .seq-img-combo { width: 130px; height: 130px; object-fit: contain; border-radius: 8px; background: #fafafa; cursor: zoom-in; }
+        .seq-img-only { width: 350px; height: 250px; object-fit: contain; border-radius: 8px; background: #fafafa; cursor: zoom-in; margin-left: 15px; }
+
+        /* Full Screen Image Modal */
+        #imageModal { display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); flex-direction: column; align-items: center; justify-content: center; cursor: zoom-out; animation: fadeIn 0.3s; }
+        #imageModal img { max-width: 90%; max-height: 85%; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); object-fit: contain; }
+        .modal-hint { color: rgba(255,255,255,0.7); margin-top: 20px; font-size: 1.2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Sequencing List */
+        .seq-list { display: flex; flex-direction: column; gap: 12px; }
+        .seq-item { background: white; border: 2px solid #ddd; border-radius: 10px; padding: 15px; display: flex; align-items: center; gap: 15px; transition: transform 0.2s; }
+        .seq-controls { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
+        .seq-btn { background: #eee; border: none; cursor: pointer; padding: 8px 10px; border-radius: 4px; font-weight: bold; font-size: 1.1rem; }
+        .seq-btn:hover { background: #ddd; }
+        
+        .check-btn { background: var(--accent); color: white; border: none; padding: 15px 30px; font-size: 1.2rem; border-radius: 50px; cursor: pointer; display: block; margin: 15px auto 0; width: 100%; max-width: 300px; box-shadow: 0 4px 10px rgba(142, 84, 233, 0.3); transition: transform 0.2s; }
+        .check-btn:hover { transform: scale(1.02); }
+
+        #certArea { display: none; text-align: center; animation: fadeIn 1s; }
+        .cert-box { border: 10px double #f1c40f; padding: 40px; border-radius: 20px; background: white; margin-bottom: 20px; }
+        .cert-name { font-family: 'Times New Roman', serif; font-size: 3rem; color: var(--primary); margin: 20px 0; border-bottom: 2px solid #eee; display: inline-block; padding: 0 20px; }
+
+        /* Email Draft Elements */
+        #emailDraftArea { display: none; animation: fadeIn 0.5s; background: white; padding: 20px; border-radius: 12px; border: 2px solid #eee; }
+        .form-group { text-align: left; margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 600; color: #555; margin-bottom: 5px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-family: inherit; font-size: 1rem; box-sizing: border-box; }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); }
+
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <h1 id="mainTitle"></h1>
+    
+    <!-- Welcome / Name Entry Area -->
+    <div id="welcomeArea">
+        <h2 style="color: var(--secondary);">Welcome!</h2>
+        <p style="font-size: 1.2rem; color: #555;">Please enter your name below to begin the assignment.</p>
+        <input type="text" id="studentNameInput" placeholder="First and Last Name">
+        <button class="check-btn" onclick="startQuiz()">Start Assignment</button>
+    </div>
+
+    <div class="progress-container" id="progContainer"><div class="progress-bar" id="bar"></div></div>
+
+    <div id="quizContent">
+        <div class="story-box" id="storyContent">
+            <!-- Injected via JS -->
+        </div>
+        <div id="interactionArea"></div>
+    </div>
+
+    <div id="certArea">
+        <div class="cert-box">
+            <h2 style="color:#f39c12; letter-spacing:2px;">CERTIFICATE OF COMPLETION</h2>
+            <p>This certifies that</p>
+            <div class="cert-name" id="certNameDisplay"></div>
+            <p>Has successfully completed <strong id="certTitleDisplay"></strong></p>
+            <p style="color:#aaa" id="dateDisplay"></p>
+        </div>
+        <button class="check-btn" onclick="showEmailDraft()">Prepare Email Results</button>
+    </div>
+
+    <div id="emailDraftArea">
+        <h2 style="color: var(--primary); margin-top:0; text-align:center;">Review & Edit Email</h2>
+        <p style="text-align:center; color:#777; font-size:0.9rem;">Review your details below before opening your mail app.</p>
+        
+        <div class="form-group">
+            <label>To (Facilitator's Email):</label>
+            <input type="email" id="draftEmail" value="">
+        </div>
+        <div class="form-group">
+            <label>Subject:</label>
+            <input type="text" id="draftSubject" value="">
+        </div>
+        <div class="form-group">
+            <label>Message / Results:</label>
+            <textarea id="draftBody" rows="8"></textarea>
+        </div>
+        
+        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px; flex-wrap: wrap;">
+            <button class="check-btn" style="background: #95a5a6; margin: 0; max-width: 200px;" onclick="backToCert()">Cancel</button>
+            <button class="check-btn" style="margin: 0; max-width: 250px;" onclick="sendFinalEmail()">Open Mail App</button>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" onclick="closeModal()">
+    <span style="position:absolute; top:20px; right:30px; color:white; font-size:40px; cursor:pointer;">&times;</span>
+    <img id="modalImage" src="" alt="Enlarged Image">
+    <div class="modal-hint">Click anywhere to close</div>
+</div>
+
+<script>
+    const DATA = [{"type":"choice","story":"In Hocus Pocus (1993), what animal is Thackery Binx turned into?","storyImg":null,"options":[{"text":"A black cat","img":null,"imageOnly":false},{"text":"A bat","img":null,"imageOnly":false},{"text":"A toad","img":null,"imageOnly":false},{"text":"A raven","img":null,"imageOnly":false}],"correct":0},{"type":"choice","story":"Work question: Your shift starts at 9:00. What time should you get there?","storyImg":null,"options":[{"text":"9:15","img":null,"imageOnly":false},{"text":"8:50, a few minutes early","img":null,"imageOnly":false},{"text":"9:05","img":null,"imageOnly":false},{"text":"10:00","img":null,"imageOnly":false}],"correct":1},{"type":"choice","story":"In Sabrina the Teenage Witch (1996), what is the name of the talking black cat?","storyImg":null,"options":[{"text":"Binx","img":null,"imageOnly":false},{"text":"Midnight","img":null,"imageOnly":false},{"text":"Salem","img":null,"imageOnly":false},{"text":"Shadow","img":null,"imageOnly":false}],"correct":2},{"type":"choice","story":"Halloweentown (1998) first aired on which TV channel?","storyImg":null,"options":[{"text":"Nickelodeon","img":null,"imageOnly":false},{"text":"Cartoon Network","img":null,"imageOnly":false},{"text":"MTV","img":null,"imageOnly":false},{"text":"Disney Channel","img":null,"imageOnly":false}],"correct":3},{"type":"choice","story":"Who wrote the Goosebumps books?","storyImg":null,"options":[{"text":"Stephen King","img":null,"imageOnly":false},{"text":"R.L. Stine","img":null,"imageOnly":false},{"text":"J.K. Rowling","img":null,"imageOnly":false},{"text":"Roald Dahl","img":null,"imageOnly":false}],"correct":1},{"type":"choice","story":"In Twilight (2008), what happens to Edward's skin in the sunlight?","storyImg":null,"options":[{"text":"It glows red","img":null,"imageOnly":false},{"text":"It sparkles","img":null,"imageOnly":false},{"text":"It turns to stone","img":null,"imageOnly":false},{"text":"It disappears","img":null,"imageOnly":false}],"correct":1},{"type":"choice","story":"In Harry Potter and the Sorcerer's Stone, what gets loose inside Hogwarts on Halloween?","storyImg":null,"options":[{"text":"A dragon","img":null,"imageOnly":false},{"text":"A werewolf","img":null,"imageOnly":false},{"text":"A troll","img":null,"imageOnly":false},{"text":"A giant spider","img":null,"imageOnly":false}],"correct":2},{"type":"choice","story":"Work question: A customer asks you a question you can't answer. What is the best thing to say?","storyImg":null,"options":[{"text":"I don't know.","img":null,"imageOnly":false},{"text":"Nothing, just walk away","img":null,"imageOnly":false},{"text":"Guess the answer","img":null,"imageOnly":false},{"text":"Let me find out for you.","img":null,"imageOnly":false}],"correct":3},{"type":"choice","story":"In Coraline (2009), what does the Other Mother have instead of eyes?","storyImg":null,"options":[{"text":"Buttons","img":null,"imageOnly":false},{"text":"Marbles","img":null,"imageOnly":false},{"text":"Coins","img":null,"imageOnly":false},{"text":"Jewels","img":null,"imageOnly":false}],"correct":0},{"type":"choice","story":"In what year did Starbucks first start selling the Pumpkin Spice Latte?","storyImg":null,"options":[{"text":"1995","img":null,"imageOnly":false},{"text":"2003","img":null,"imageOnly":false},{"text":"2012","img":null,"imageOnly":false},{"text":"2019","img":null,"imageOnly":false}],"correct":1},{"type":"choice","story":"Stranger Things (2016) takes place in what town?","storyImg":null,"options":[{"text":"Hawkins, Indiana","img":null,"imageOnly":false},{"text":"Riverdale","img":null,"imageOnly":false},{"text":"Sunnydale, California","img":null,"imageOnly":false},{"text":"Forks, Washington","img":null,"imageOnly":false}],"correct":0},{"type":"choice","story":"Work question: A customer buys a $3.50 item and pays with a $5 bill. How much change do you give?","storyImg":null,"options":[{"text":"$2.50","img":null,"imageOnly":false},{"text":"$1.50","img":null,"imageOnly":false},{"text":"$8.50","img":null,"imageOnly":false},{"text":"$1.00","img":null,"imageOnly":false}],"correct":1},{"type":"choice","story":"Who is the voice of Dracula in Hotel Transylvania (2012)?","storyImg":null,"options":[{"text":"Jim Carrey","img":null,"imageOnly":false},{"text":"Will Ferrell","img":null,"imageOnly":false},{"text":"Adam Sandler","img":null,"imageOnly":false},{"text":"Kevin Hart","img":null,"imageOnly":false}],"correct":2},{"type":"choice","story":"Pixar's Coco (2017) is about which holiday?","storyImg":null,"options":[{"text":"Halloween","img":null,"imageOnly":false},{"text":"Thanksgiving","img":null,"imageOnly":false},{"text":"New Year's Eve","img":null,"imageOnly":false},{"text":"Day of the Dead","img":null,"imageOnly":false}],"correct":3},{"type":"choice","story":"In Stranger Things season 1, the kids name the monster Demogorgon after a creature from what game?","storyImg":null,"options":[{"text":"Monopoly","img":null,"imageOnly":false},{"text":"Dungeons & Dragons","img":null,"imageOnly":false},{"text":"Pac-Man","img":null,"imageOnly":false},{"text":"Clue","img":null,"imageOnly":false}],"correct":1},{"type":"choice","story":"In Netflix's Wednesday (2022), what school does Wednesday Addams go to?","storyImg":null,"options":[{"text":"Hogwarts","img":null,"imageOnly":false},{"text":"Sunnydale High","img":null,"imageOnly":false},{"text":"Nevermore Academy","img":null,"imageOnly":false},{"text":"Hawkins High","img":null,"imageOnly":false}],"correct":2},{"type":"choice","story":"Which actress plays Wednesday AND stars in Beetlejuice Beetlejuice (2024)?","storyImg":null,"options":[{"text":"Jenna Ortega","img":null,"imageOnly":false},{"text":"Zendaya","img":null,"imageOnly":false},{"text":"Millie Bobby Brown","img":null,"imageOnly":false},{"text":"Florence Pugh","img":null,"imageOnly":false}],"correct":0},{"type":"choice","story":"Work question: You press the first bag of an order and see a spelling mistake. What should you do?","storyImg":null,"options":[{"text":"Keep pressing the rest","img":null,"imageOnly":false},{"text":"Stop and tell your supervisor","img":null,"imageOnly":false},{"text":"Hide the bag","img":null,"imageOnly":false},{"text":"Hope the customer won't notice","img":null,"imageOnly":false}],"correct":1},{"type":"choice","story":"In Netflix's KPop Demon Hunters (2025), the heroes who fight demons are what kind of group?","storyImg":null,"options":[{"text":"A soccer team","img":null,"imageOnly":false},{"text":"A rock band","img":null,"imageOnly":false},{"text":"A cooking crew","img":null,"imageOnly":false},{"text":"A K-pop girl group","img":null,"imageOnly":false}],"correct":3},{"type":"choice","story":"In the Five Nights at Freddy's movie (2023), what job does the main character take at the pizzeria?","storyImg":null,"options":[{"text":"Pizza chef","img":null,"imageOnly":false},{"text":"Night security guard","img":null,"imageOnly":false},{"text":"Birthday party clown","img":null,"imageOnly":false},{"text":"Delivery driver","img":null,"imageOnly":false}],"correct":1},{"type":"choice","story":"In The Nightmare Before Christmas (1993), Jack Skellington is the Pumpkin King of what town?","storyImg":null,"options":[{"text":"Christmas Town","img":null,"imageOnly":false},{"text":"Monstropolis","img":null,"imageOnly":false},{"text":"Halloween Town","img":null,"imageOnly":false},{"text":"Transylvania","img":null,"imageOnly":false}],"correct":2},{"type":"choice","story":"Team Edward or Team Jacob? In Twilight, what kind of creature is Jacob?","storyImg":null,"options":[{"text":"A werewolf","img":null,"imageOnly":false},{"text":"A vampire","img":null,"imageOnly":false},{"text":"A zombie","img":null,"imageOnly":false},{"text":"A ghost","img":null,"imageOnly":false}],"correct":0},{"type":"choice","story":"Work question: The person at work who guides your work and checks on it is called your ______.","storyImg":null,"options":[{"text":"Customer","img":null,"imageOnly":false},{"text":"Coworker","img":null,"imageOnly":false},{"text":"Neighbor","img":null,"imageOnly":false},{"text":"Supervisor","img":null,"imageOnly":false}],"correct":3},{"type":"choice","story":"In Ghostbusters, what is the name of the green ghost who eats everything?","storyImg":null,"options":[{"text":"Casper","img":null,"imageOnly":false},{"text":"Slimer","img":null,"imageOnly":false},{"text":"Boo","img":null,"imageOnly":false},{"text":"Blinky","img":null,"imageOnly":false}],"correct":1},{"type":"choice","story":"What is the name of The Simpsons' yearly Halloween episodes?","storyImg":null,"options":[{"text":"Spooky Springfield","img":null,"imageOnly":false},{"text":"Haunted Homer","img":null,"imageOnly":false},{"text":"Treehouse of Horror","img":null,"imageOnly":false},{"text":"Nightmare on Evergreen Terrace","img":null,"imageOnly":false}],"correct":2}];
+    const TEACHER_EMAIL = "Burdette63@gmail.com";
+    const QUIZ_TITLE = "Halloween Pop Culture Quiz 1";
+    
+    document.getElementById('mainTitle').innerText = QUIZ_TITLE;
+    document.getElementById('certTitleDisplay').innerText = QUIZ_TITLE;
+
+    let STUDENT_NAME = "";
+    let currentIndex = 0;
+    let currentText = "";
+    let sequenceState =[];
+    let resultsLog =[];
+
+    // --- Modal Logic ---
+    window.expandImage = function(src, event) {
+        if(event) event.stopPropagation(); // Prevent triggering selection logic
+        const modal = document.getElementById('imageModal');
+        document.getElementById('modalImage').src = src;
+        modal.style.display = 'flex';
+    };
+
+    window.closeModal = function() {
+        document.getElementById('imageModal').style.display = 'none';
+    };
+
+    function startQuiz() {
+        const nameInput = document.getElementById('studentNameInput').value.trim();
+        if(!nameInput) { alert("Please enter your name to continue."); return; }
+        
+        STUDENT_NAME = nameInput;
+        document.getElementById('welcomeArea').style.display = 'none';
+        document.getElementById('progContainer').style.display = 'block';
+        document.getElementById('quizContent').style.display = 'block';
+        
+        if(DATA.length > 0) loadQuestion();
+        else document.getElementById('interactionArea').innerHTML = "<h2>No tasks found.</h2>";
+    }
+
+    function loadQuestion() {
+        if(currentIndex >= DATA.length) { showCertificate(); return; }
+        document.getElementById('bar').style.width = ((currentIndex / DATA.length) * 100) + "%";
+        
+        const q = DATA[currentIndex];
+        const container = document.getElementById('interactionArea');
+        container.innerHTML = "";
+        
+        currentText = q.story;
+        
+        let storyHTML = `
+            <div class="story-text-row">
+                <button class="btn-speak" onclick="speakText(currentText)" title="Read text aloud">
+                    <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                </button>
+                <span>${q.story}</span>
+            </div>
+            ${q.storyImg ? `
+            <div class="img-wrapper" style="width: auto; align-self: flex-start; margin-top: 15px;">
+                <img src="${q.storyImg}" style="max-width:100%; max-height:300px; border-radius:12px; cursor:zoom-in;" onclick="expandImage(this.src, event)">
+                <div class="expand-icon" onclick="expandImage(this.previousElementSibling.src, event)">🔍 Expand</div>
+            </div>` : ''}
+        `;
+        
+        document.getElementById('storyContent').innerHTML = storyHTML;
+        speakText(q.story);
+
+        if(q.type === 'choice') renderMultipleChoice(q, container);
+        else if(q.type === 'sequence') renderSequence(q, container);
+    }
+
+    function renderMultipleChoice(q, container) {
+        container.className = "choice-grid";
+        q.options.forEach((opt, idx) => {
+            const card = document.createElement('div');
+            card.className = "option-card";
+            
+            let imgClass = opt.imageOnly ? 'img-only-large' : 'img-text-combo';
+            
+            // Image wrapper strictly separates clicking image (which selects answer) vs clicking overlay (expands image)
+            let imgHTML = opt.img ? `
+                <div class="img-wrapper">
+                    <img src="${opt.img}" class="${imgClass}" alt="Option Image">
+                    <div class="expand-icon" onclick="expandImage(this.previousElementSibling.src, event)">🔍 Expand</div>
+                </div>` : '';
+            
+            let textHTML = opt.imageOnly ? '' : `
+                <div class="opt-text-container" style="margin-top: 15px;">
+                    <span>${opt.text}</span>
+                    <button class="btn-speak-sm" title="Read aloud" onclick="event.stopPropagation(); speakItemText(${idx}, 'choice')">
+                        <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                    </button>
+                </div>
+            `;
+            
+            card.innerHTML = imgHTML + textHTML;
+            card.onclick = () => checkChoice(card, idx, q.correct);
+            container.appendChild(card);
+        });
+    }
+
+    function checkChoice(element, idx, correctIdx) {
+        if(element.classList.contains('correct')) return;
+        if(idx === correctIdx) {
+            element.classList.add('correct');
+            speakText("Correct!");
+            resultsLog.push(`Task ${currentIndex+1}: Correct`);
+            setTimeout(() => { currentIndex++; loadQuestion(); }, 1500);
+        } else {
+            element.classList.add('wrong');
+            speakText("Try again");
+            setTimeout(() => element.classList.remove('wrong'), 800);
+        }
+    }
+
+    function renderSequence(q, container) {
+        container.className = "seq-list";
+        if(sequenceState.length === 0) {
+            sequenceState = q.options.map((opt, i) => ({ ...opt, originalIndex: i }));
+            shuffleArray(sequenceState);
+        }
+        renderSequenceItems(container);
+        const btn = document.createElement('button');
+        btn.className = "check-btn"; btn.innerText = "Check Order";
+        btn.onclick = () => checkSequence(q);
+        container.appendChild(btn);
+    }
+
+    function renderSequenceItems(container) {
+        container.innerHTML = "";
+        sequenceState.forEach((item, idx) => {
+            const row = document.createElement('div');
+            row.className = "seq-item";
+            
+            let imgClass = item.imageOnly ? 'seq-img-only' : 'seq-img-combo';
+            
+            let imgHTML = item.img ? `
+                <div class="seq-img-wrapper">
+                    <img src="${item.img}" alt="Sequence Image" class="${imgClass}" onclick="expandImage(this.src, event)">
+                    <div class="expand-icon" style="bottom:8px; right:8px; padding:4px 8px; font-size:0.8rem;" onclick="expandImage(this.previousElementSibling.src, event)">🔍</div>
+                </div>` : '';
+            
+            let textHTML = item.imageOnly ? '' : `
+                <span style="font-size:1.3rem; flex:1; font-weight:600; color:#444; margin-left:15px;">${item.text}</span>
+                <button class="btn-speak-sm" title="Read aloud" onclick="speakItemText(${idx}, 'sequence')">
+                    <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                </button>
+            `;
+
+            row.innerHTML = `
+                <div class="seq-controls">
+                    <button class="seq-btn" onclick="moveItem(${idx}, -1)" ${idx===0?'disabled':''}>▲</button>
+                    <button class="seq-btn" onclick="moveItem(${idx}, 1)" ${idx===sequenceState.length-1?'disabled':''}>▼</button>
+                </div>
+                ${imgHTML}
+                ${textHTML}
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    window.moveItem = function(idx, dir) {
+        const newIdx = idx + dir;
+        const temp = sequenceState[newIdx];
+        sequenceState[newIdx] = sequenceState[idx];
+        sequenceState[idx] = temp;
+        
+        const container = document.getElementById('interactionArea');
+        renderSequenceItems(container);
+        
+        const btn = document.createElement('button');
+        btn.className = "check-btn"; btn.innerText = "Check Order";
+        const q = DATA[currentIndex];
+        btn.onclick = () => checkSequence(q);
+        container.appendChild(btn);
+    };
+
+    function checkSequence(q) {
+        let isCorrect = true;
+        for(let i=0; i<sequenceState.length; i++) {
+            if(sequenceState[i].originalIndex !== i) { isCorrect = false; break; }
+        }
+        if(isCorrect) {
+            speakText("That is the correct order!");
+            resultsLog.push(`Task ${currentIndex+1}: Sequence Correct`);
+            sequenceState =[]; currentIndex++;
+            setTimeout(loadQuestion, 1500);
+        } else {
+            speakText("Not quite right. Try moving the items.");
+            const list = document.querySelector('.seq-list');
+            list.style.animation = "shake 0.5s";
+            setTimeout(() => list.style.animation = "", 500);
+        }
+    }
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));[array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function speakText(txt) {
+        if(!txt || txt.trim() === "") return;
+        if('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(txt);
+            window.speechSynthesis.speak(u);
+        }
+    }
+
+    window.speakItemText = function(idx, type) {
+        if(type === 'choice') {
+            speakText(DATA[currentIndex].options[idx].text);
+        } else {
+            speakText(sequenceState[idx].text);
+        }
+    };
+
+    let certDisplayedOnce = false;
+
+    function showCertificate() {
+        document.getElementById('progContainer').style.display = 'none';
+        document.getElementById('quizContent').style.display = 'none';
+        document.getElementById('emailDraftArea').style.display = 'none';
+        document.getElementById('certArea').style.display = 'block';
+        
+        document.getElementById('certNameDisplay').innerText = STUDENT_NAME;
+        document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString();
+        
+        if(!certDisplayedOnce) { speakText("Congratulations! You have finished."); certDisplayedOnce = true; }
+    }
+
+    function showEmailDraft() {
+        document.getElementById('certArea').style.display = 'none';
+        document.getElementById('emailDraftArea').style.display = 'block';
+
+        document.getElementById('draftEmail').value = TEACHER_EMAIL;
+        document.getElementById('draftSubject').value = `Assignment Results: ${STUDENT_NAME} - ${QUIZ_TITLE}`;
+        
+        const bodyText = `Student: ${STUDENT_NAME}\nAssignment: ${QUIZ_TITLE}\nDate: ${new Date().toLocaleDateString()}\n\nResults:\n` + resultsLog.join('\n');
+        document.getElementById('draftBody').value = bodyText;
+    }
+
+    function backToCert() {
+        document.getElementById('emailDraftArea').style.display = 'none';
+        document.getElementById('certArea').style.display = 'block';
+    }
+
+    function sendFinalEmail() {
+        const to = document.getElementById('draftEmail').value;
+        const subject = document.getElementById('draftSubject').value;
+        const body = document.getElementById('draftBody').value;
+        const href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.location.href = href;
+    }
+
+</script>
+</body>
+</html>
